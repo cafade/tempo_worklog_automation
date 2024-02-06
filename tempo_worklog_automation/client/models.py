@@ -3,8 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, validator
 
 
-class IssueModel(BaseModel):
-    """Pydantic model for worklog issues."""
+class WorklogModel(BaseModel):
+    """Pydantic model for worklog entries."""
 
     issue: str
     time_spent: int

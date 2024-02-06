@@ -1,0 +1,10 @@
+worklogs:
+  - issue: INT-10
+    time_spent: 2h
+    start_date: "2024-02-05"
+    start_time: "8:00:00"
+
+  - issue: INT-15
+    time_spent: 3h
+    start_date: "2024-02-05"
+    start_time: "10:00:00"
