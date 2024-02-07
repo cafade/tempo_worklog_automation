@@ -38,6 +38,36 @@ async def parse_worklog(
     return parsed_worklog
 
 
+async def parse_and_send_request(
+    responses: List[httpx.Response],
+    client: httpx.AsyncClient,
+    worklog: WorklogModel,
+    url: str,
+    headers: Dict[str, str],
+    author_account_id: str,
+) -> httpx.Response:
+    parsed_worklog = await parse_worklog(worklog, author_account_id)
+    try:
+        response = await client.post(
+            url=url,
+            headers=headers,
+            json=parsed_worklog,
+        )
+        responses.append(response)
+        response.raise_for_status()
+        return response
+
+    except httpx.HTTPStatusError as exc:
+        decoded_content = exc.response.content.decode("utf-8")
+        print(
+            f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
+        )
+        raise
+    except httpx.RequestError as exc:
+        print(f"An error occurred while requesting {exc.request.url!r}.")
+        raise
+
+
 async def run_api_requests(
     list_of_worklogs: List[WorklogModel],
 ) -> Union[List[httpx.Response], List[int]]:
@@ -57,29 +87,19 @@ async def run_api_requests(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {tempo_oauth_token}",
     }
-    responses = []
-    for worklog in list_of_worklogs:
-        parsed_worklog = await parse_worklog(worklog, author_account_id)
-
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    url=url,
-                    headers=headers,
-                    json=parsed_worklog,
+    responses: List[httpx.Response] = []
+    async with httpx.AsyncClient() as client:
+        async with anyio.create_task_group() as tg:
+            for worklog in list_of_worklogs:
+                tg.start_soon(
+                    parse_and_send_request,
+                    responses,
+                    client,
+                    worklog,
+                    url,
+                    headers,
+                    author_account_id,
                 )
-                responses.append(response)
-                response.raise_for_status()
-
-            except httpx.HTTPStatusError as exc:
-                decoded_content = exc.response.content.decode("utf-8")
-                print(
-                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
-                )
-                raise
-            except httpx.RequestError as exc:
-                print(f"An error occurred while requesting {exc.request.url!r}.")
-                raise
 
     return [response.status_code for response in responses]
 
