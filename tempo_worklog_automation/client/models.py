@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, FilePath, validator
 
 
 class WorklogModel(BaseModel):
@@ -62,3 +62,7 @@ class WorklogModel(BaseModel):
         except ValueError:
             raise ValueError("Incorrect time format, should be HH:MM:SS")
         return value
+
+
+class CliArguments(BaseModel):
+    file_path: FilePath

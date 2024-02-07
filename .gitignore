@@ -144,3 +144,5 @@ cython_debug/
 
 # Misc
 .~lock.*
+worklogs.csv
+worklogs.xlsx
