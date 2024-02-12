@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import anyio
 import httpx
@@ -45,27 +45,41 @@ async def parse_and_send_request(
     url: str,
     headers: Dict[str, str],
     author_account_id: str,
-) -> httpx.Response:
+    max_retries: int = 5,
+    backoff_factor: float = 0.5,
+) -> Optional[httpx.Response]:
     parsed_worklog = await parse_worklog(worklog, author_account_id)
-    try:
-        response = await client.post(
-            url=url,
-            headers=headers,
-            json=parsed_worklog,
-        )
-        responses.append(response)
-        response.raise_for_status()
-        return response
 
-    except httpx.HTTPStatusError as exc:
-        decoded_content = exc.response.content.decode("utf-8")
-        print(
-            f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
-        )
-        raise
-    except httpx.RequestError as exc:
-        print(f"An error occurred while requesting {exc.request.url!r}.")
-        raise
+    for attempt in range(max_retries):
+        try:
+            response = await client.post(
+                url=url,
+                headers=headers,
+                json=parsed_worklog,
+            )
+            responses.append(response)
+            response.raise_for_status()
+            return response
+
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                wait_time = backoff_factor * (2**attempt)
+                print(
+                    f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",
+                )
+                await anyio.sleep(wait_time)
+            else:
+                decoded_content = exc.response.content.decode("utf-8")
+                print(
+                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
+                )
+                raise
+        except httpx.RequestError as exc:
+            print(f"An error occurred while requesting {exc.request.url!r}.")
+            raise
+
+    print(f"All retries failed for {parsed_worklog}.")
+    return None
 
 
 async def run_api_requests(
@@ -76,7 +90,7 @@ async def run_api_requests(
 
     :param value: validation string.
     :raises ValueError: when validator condition fails.
-    :return: validation string.
+    :return: list of http response codes.
     """
 
     tempo_oauth_token = settings.tempo_oauth_token
