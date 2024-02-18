@@ -1,4 +1,4 @@
-from tempo_worklog_automation.client import make_async_api_requests
+from tempo_worklog_automation.client import make_async_create_worklog_requests
 from tempo_worklog_automation.client.models import WorklogModel
 from tempo_worklog_automation.client.utils.arguments import parse_args
 from tempo_worklog_automation.client.utils.csv import load_csv_file
@@ -32,7 +32,7 @@ def main() -> None:
         for worklog in csv_object["worklogs"]
     ]
 
-    make_async_api_requests(list_of_worklogs)  # type: ignore
+    make_async_create_worklog_requests(list_of_worklogs)  # type: ignore
 
     print("Finished upload.")  # noqa: WPS421
 
