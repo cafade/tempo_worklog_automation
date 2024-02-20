@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Optional
 
 import anyio
@@ -5,6 +6,8 @@ import httpx
 
 from tempo_worklog_automation.client.models import WorklogModel
 from tempo_worklog_automation.settings import settings
+
+logger = logging.getLogger(settings.logger_name)
 
 
 async def delete_worklog(
@@ -30,21 +33,21 @@ async def delete_worklog(
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 429:
                 wait_time = backoff_factor * (2**attempt)
-                print(
+                logger.debug(
                     f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",
                 )
                 await anyio.sleep(wait_time)
             else:
                 decoded_content = exc.response.content.decode("utf-8")
-                print(
+                logger.debug(
                     f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
                 )
                 raise
         except httpx.RequestError as exc:
-            print(f"An error occurred while requesting {exc.request.url!r}.")
+            logger.debug(f"An error occurred while requesting {exc.request.url!r}.")
             raise
 
-    print(f"All retries failed for {worklog_id}.")
+    logger.debug(f"All retries failed for {worklog_id}.")
     return None
 
 
@@ -137,21 +140,21 @@ async def parse_and_create_worklog(
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 429:
                 wait_time = backoff_factor * (2**attempt)
-                print(
+                logger.debug(
                     f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",
                 )
                 await anyio.sleep(wait_time)
             else:
                 decoded_content = exc.response.content.decode("utf-8")
-                print(
+                logger.debug(
                     f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
                 )
                 raise
         except httpx.RequestError as exc:
-            print(f"An error occurred while requesting {exc.request.url!r}.")
+            logger.debug(f"An error occurred while requesting {exc.request.url!r}.")
             raise
 
-    print(f"All retries failed for {parsed_worklog}.")
+    logger.debug(f"All retries failed for {parsed_worklog}.")
     return None
 
 
@@ -207,4 +210,6 @@ def make_async_create_worklog_requests(list_of_worklogs: List[WorklogModel]) -> 
     :raises ValueError: when validator condition fails.
     :return: validation string.
     """
+    logger.info("running make_async_create_worklog_requests")
+
     return anyio.run(run_create_worklog_requests, list_of_worklogs, backend="asyncio")  # type: ignore

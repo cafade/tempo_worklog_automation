@@ -2,6 +2,8 @@ from tempo_worklog_automation.client import make_async_create_worklog_requests
 from tempo_worklog_automation.client.models import WorklogModel
 from tempo_worklog_automation.client.utils.arguments import parse_args
 from tempo_worklog_automation.client.utils.csv import load_csv_file
+from tempo_worklog_automation.client.utils.log import LoggingClass
+from tempo_worklog_automation.settings import settings
 
 
 # TODO: use these as reference if needed: https://github.com/awiddersheim/tempocli -
@@ -11,7 +13,13 @@ from tempo_worklog_automation.client.utils.csv import load_csv_file
 def main() -> None:
     """Main function."""
 
-    print("Uploading worklogs.")  # noqa: WPS421
+    logger_instance = LoggingClass(
+        name=settings.logger_name,
+        level=settings.log_level.value,
+    )
+    logger = logger_instance.create_logger()
+
+    logger.info("Uploading worklogs.")
 
     cli_arguments = parse_args()
     file_path = cli_arguments.file_path
@@ -30,7 +38,7 @@ def main() -> None:
 
     make_async_create_worklog_requests(list_of_worklogs)  # type: ignore
 
-    print("Finished upload.")  # noqa: WPS421
+    logger.info("Finished upload.")
 
 
 if __name__ == "__main__":

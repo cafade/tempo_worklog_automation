@@ -1,6 +1,7 @@
 import enum
 from logging import DEBUG, ERROR, INFO, WARNING
 
+from pydantic import validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,13 +17,24 @@ class LogLevel(enum.Enum):
 class Settings(BaseSettings):
     """Application settings."""
 
+    @validator("log_level", pre=True)
+    def validate_log_level(cls, value: str) -> LogLevel:
+        """Validate that the log level is a valid LogLevel enum member."""
+        try:
+            return LogLevel[value.upper()]
+        except KeyError:
+            raise ValueError(
+                "Invalid log level, values values are: DEBUG, INFO, WARNING, and ERROR.",
+            )
+
+    log_level: LogLevel = LogLevel.INFO
+    logger_name: str = "main_logger"
+
     # Current environment
     environment: str = "dev"
 
     # Testing
     run_integration_tests: bool = True
-
-    log_level: LogLevel = LogLevel.INFO
 
     # API calls credentials and variables
     jira_account_email: str
