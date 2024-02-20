@@ -13,10 +13,6 @@ def main() -> None:
 
     print("Uploading worklogs.")  # noqa: WPS421
 
-    # project_root = dirname(__file__)
-    # load_csv_file_path = Path(f"{project_root}/tests/resources/valid_worklogs.csv")
-    # csv_object = load_csv_file(load_csv_file_path)
-
     cli_arguments = parse_args()
     file_path = cli_arguments.file_path
 

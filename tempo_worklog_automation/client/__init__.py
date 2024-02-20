@@ -130,7 +130,6 @@ async def parse_and_create_worklog(
                 json=parsed_worklog,
             )
             responses.append(response)
-            print(f"response.json(): {response.json()}")
             response.raise_for_status()
             worklog_ids.append(response.json()["tempoWorklogId"])
             return response
