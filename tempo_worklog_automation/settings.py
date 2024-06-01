@@ -18,13 +18,19 @@ class Settings(BaseSettings):
     """Application settings."""
 
     @validator("log_level", pre=True)
-    def validate_log_level(cls, value: str) -> LogLevel:
-        """Validate that the log level is a valid LogLevel enum member."""
+    def validate_log_level(cls, value: str) -> LogLevel:  # noqa: N805
+        """
+        Validate that the log level is a valid LogLevel enum member.
+
+        :param value: validation string.
+        :raises ValueError: when validator condition fails.
+        :return: enum log level.
+        """
         try:
             return LogLevel[value.upper()]
         except KeyError:
             raise ValueError(
-                "Invalid log level, values values are: DEBUG, INFO, WARNING, and ERROR.",
+                "Invalid log level, values values are: DEBUG, INFO, WARNING, and ERROR.",  # noqa: E501
             )
 
     log_level: LogLevel = LogLevel.INFO

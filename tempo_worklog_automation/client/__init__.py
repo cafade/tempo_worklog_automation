@@ -1,3 +1,4 @@
+"""Tempo worklog api client."""
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -10,7 +11,7 @@ from tempo_worklog_automation.settings import settings
 logger = logging.getLogger(settings.logger_name)
 
 
-async def delete_worklog(
+async def delete_worklog(  # noqa: WPS211, WPS231
     responses: List[httpx.Response],
     worklog_id: int,
     client: httpx.AsyncClient,
@@ -19,6 +20,20 @@ async def delete_worklog(
     max_retries: int = 5,
     backoff_factor: float = 0.5,
 ) -> Optional[httpx.Response]:
+    """
+    Perform api call to delete worklog by id. Retries n times when being throttled.
+
+    :param responses: empty list of httpx.Response to store them.
+    :param worklog_id: specific worklog id to be deleted.
+    :param client: instance of httpx.AsyncClient.
+    :param url: url for Tempo api endpoint.
+    :param headers: dictionary with key value pairs for each header in request.
+    :param max_retries: int for the number of retries for the request.
+    :param backoff_factor: float for the exponential wait period.
+    :raises httpx.HTTPStatusError: when request returns an http error code.
+    :raises httpx.RequestError: when request fails.
+    :return: httpx.Response or None.
+    """
     for attempt in range(max_retries):
         try:
             response = await client.delete(
@@ -31,20 +46,22 @@ async def delete_worklog(
             return response
 
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
+            if exc.response.status_code == 429:  # noqa: WPS432
                 wait_time = backoff_factor * (2**attempt)
                 logger.debug(
-                    f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",
+                    f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",  # noqa: E501
                 )
                 await anyio.sleep(wait_time)
             else:
                 decoded_content = exc.response.content.decode("utf-8")
                 logger.debug(
-                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
+                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",  # noqa: E501, WPS237
                 )
                 raise
         except httpx.RequestError as exc:
-            logger.debug(f"An error occurred while requesting {exc.request.url!r}.")
+            logger.debug(
+                f"An error occurred while requesting {exc.request.url!r}.",  # noqa: E501, WPS237
+            )
             raise
 
     logger.debug(f"All retries failed for {worklog_id}.")
@@ -54,12 +71,15 @@ async def delete_worklog(
 async def run_delete_worklog_requests(
     worklog_ids: List[int],
 ) -> List[int]:
-    tempo_oauth_token = settings.tempo_oauth_token
+    """
+    Run api delete requests from list of worklog ids, run through anyio backend asyncio.
 
-    url = settings.tempo_base_api_url
+    :param worklog_ids: ints list of worklog ids to delete.
+    :return: list of http response codes.
+    """
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {tempo_oauth_token}",
+        "Authorization": f"Bearer {settings.tempo_oauth_token}",
     }
     responses: List[httpx.Response] = []
     async with httpx.AsyncClient() as client:
@@ -70,7 +90,7 @@ async def run_delete_worklog_requests(
                     responses,
                     worklog_id,
                     client,
-                    url,
+                    settings.tempo_base_api_url,
                     headers,
                 )
 
@@ -78,15 +98,26 @@ async def run_delete_worklog_requests(
 
 
 def make_async_delete_worklog_requests(worklog_ids: List[int]) -> None:
-    return anyio.run(run_delete_worklog_requests, worklog_ids, backend="asyncio")  # type: ignore
+    """
+    Run api delete requests from list of worklog ids, run through anyio backend asyncio.
+
+    :param worklog_ids: ints list of worklog ids to delete.
+    :return: None.
+    """
+    logger.info("running make_async_delete_worklog_requests")
+
+    return anyio.run(run_delete_worklog_requests, worklog_ids, backend="asyncio")  # type: ignore # noqa: E501
 
 
 async def get_issue_id(issue_name: str) -> int:
-    jira_account_email = settings.jira_account_email
-    jira_token = settings.jira_token
+    """
+    Run Jira api request request to get the issue / worklog internal id from the issue_name, run through anyio backend asyncio.
 
+    :param issue_name: string for the issue / worklog name.
+    :return: Int with the issue / worklog internal id..
+    """  # noqa: E501
     url = f"{settings.jira_base_api_url}/{issue_name}"
-    auth = (jira_account_email, jira_token)
+    auth = (settings.jira_account_email, settings.jira_token)
     headers = {"Content-Type": "application/json"}
 
     async with httpx.AsyncClient() as client:
@@ -99,8 +130,15 @@ async def parse_worklog(
     worklog: WorklogModel,
     author_account_id: str,
 ) -> Dict[str, Any]:
+    """
+    Parse an worklog name string, get the corresponding issue / worklog internal id int.
+
+    :param worklog: worklog model to parse for internal id.
+    :param author_account_id: author account id to use when creating the worklog.
+    :return: parsed_worklog: new object that contains int of internal issue id.
+    """
     issue_id = await get_issue_id(worklog.issue)
-    parsed_worklog = {
+    return {
         "authorAccountId": author_account_id,
         "description": worklog.issue,
         "issueId": issue_id,
@@ -109,10 +147,8 @@ async def parse_worklog(
         "timeSpentSeconds": worklog.time_spent,
     }
 
-    return parsed_worklog
 
-
-async def parse_and_create_worklog(
+async def parse_and_create_worklog(  # noqa: WPS211, WPS231
     responses: List[httpx.Response],
     worklog_ids: List[int],
     client: httpx.AsyncClient,
@@ -123,6 +159,25 @@ async def parse_and_create_worklog(
     max_retries: int = 5,
     backoff_factor: float = 0.5,
 ) -> Optional[httpx.Response]:
+    """
+    Parse and create worklog.
+
+    Call parse_worklog() for the new worklog object to be created and perform a post
+    request to tempo API endpoint with the object and authentication headers.
+
+    :param responses: empty list of httpx.Response to store them.
+    :param worklog_ids: empty list of ints to store the corresponding internal id.
+    :param client: instance of httpx.AsyncClient.
+    :param worklog: instance worklog model inside list_of_worklogs.
+    :param url: url for Tempo api endpoint.
+    :param headers: dictionary with key value pairs for each header in request.
+    :param author_account_id: author account id to use when creating the worklog.
+    :param max_retries: int for the number of retries for the request.
+    :param backoff_factor: float for the exponential wait period.
+    :raises httpx.HTTPStatusError: when request returns an http error code.
+    :raises httpx.RequestError: when request fails.
+    :return: httpx.Response: response code from post request for issue creation or None.
+    """
     parsed_worklog = await parse_worklog(worklog, author_account_id)
 
     for attempt in range(max_retries):
@@ -138,16 +193,16 @@ async def parse_and_create_worklog(
             return response
 
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
+            if exc.response.status_code == 429:  # noqa: WPS432
                 wait_time = backoff_factor * (2**attempt)
                 logger.debug(
-                    f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",
+                    f"Received HTTP  429 - Too Many Requests. Retrying in {wait_time} seconds...",  # noqa: E501
                 )
                 await anyio.sleep(wait_time)
             else:
                 decoded_content = exc.response.content.decode("utf-8")
                 logger.debug(
-                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",
+                    f"Error response {exc.response.status_code!r} while requesting {exc.request.url!r}.\n\t{decoded_content}",  # noqa: WPS237, E501
                 )
                 raise
         except httpx.RequestError as exc:
@@ -162,22 +217,16 @@ async def run_create_worklog_requests(
     list_of_worklogs: List[WorklogModel],
 ) -> Dict[str, Any]:
     """
-    Run api post requests from list of WorklogsModels, run through anyio backend asyncio.
+    Run api post requests from list of WorklogsModels. Call anyio.create_task_group().
 
-    :param value: validation string.
-    :raises ValueError: when validator condition fails.
+    :param list_of_worklogs: list of WorklogModel objects.
     :return: list of http response codes.
     """
-
     results: Dict[str, Any] = {"status_codes": [], "worklog_ids": []}
 
-    tempo_oauth_token = settings.tempo_oauth_token
-    author_account_id = settings.author_account_id
-
-    url = settings.tempo_base_api_url
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {tempo_oauth_token}",
+        "Authorization": f"Bearer {settings.tempo_oauth_token}",
     }
     responses: List[httpx.Response] = []
     worklog_ids: List[int] = []
@@ -190,9 +239,9 @@ async def run_create_worklog_requests(
                     worklog_ids,
                     client,
                     worklog,
-                    url,
+                    settings.tempo_base_api_url,
                     headers,
-                    author_account_id,
+                    settings.author_account_id,
                 )
 
     status_codes = [response.status_code for response in responses]
@@ -204,12 +253,15 @@ async def run_create_worklog_requests(
 
 def make_async_create_worklog_requests(list_of_worklogs: List[WorklogModel]) -> None:
     """
-    Run api post requests from list of WorklogsModels, run through anyio backend asyncio.
+    Run api post requests from list of WorklogsModels through anyio backend asyncio.
 
-    :param value: validation string.
-    :raises ValueError: when validator condition fails.
-    :return: validation string.
+    :param list_of_worklogs: list of WorklogsModels to use in requests.
+    :return: None.
     """
     logger.info("running make_async_create_worklog_requests")
 
-    return anyio.run(run_create_worklog_requests, list_of_worklogs, backend="asyncio")  # type: ignore
+    return anyio.run(  # type: ignore
+        run_create_worklog_requests,  # type: ignore
+        list_of_worklogs,
+        backend="asyncio",
+    )

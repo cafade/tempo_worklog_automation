@@ -4,6 +4,11 @@ from tempo_worklog_automation.client.models import CliArguments
 
 
 def parse_args() -> CliArguments:
+    """
+    Return CliArguments model with parsed cli args.
+
+    :return: validation string.
+    """
     parser = argparse.ArgumentParser(description="Worklogs file path.")
 
     parser.add_argument(
@@ -16,6 +21,5 @@ def parse_args() -> CliArguments:
 
     args = parser.parse_args()
     unvalidated_file_path = args.file_path
-    cli_arguments = CliArguments(file_path=unvalidated_file_path)
 
-    return cli_arguments
+    return CliArguments(file_path=unvalidated_file_path)

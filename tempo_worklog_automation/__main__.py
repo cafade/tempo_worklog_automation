@@ -12,7 +12,6 @@ from tempo_worklog_automation.settings import settings
 #  https://www.python-httpx.org/async/#anyio
 def main() -> None:
     """Main function."""
-
     logger_instance = LoggingClass(
         name=settings.logger_name,
         level=settings.log_level.value,
@@ -22,9 +21,8 @@ def main() -> None:
     logger.info("Uploading worklogs.")
 
     cli_arguments = parse_args()
-    file_path = cli_arguments.file_path
 
-    csv_object = load_csv_file(file_path)
+    csv_object = load_csv_file(cli_arguments.file_path)
 
     list_of_worklogs = [
         WorklogModel(
@@ -43,3 +41,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    # test comment

@@ -12,6 +12,8 @@ async def test_load_issue_model(load_csv_file_with_random_values) -> None:  # ty
     GIVEN a csv file path string
     WHEN load_csv_file is called
     THEN object with contents of csv file must be returned
+
+    :param load_csv_file_with_random_values: fixture to test csv files operations.
     """
     csv_object = load_csv_file_with_random_values
 
@@ -22,7 +24,7 @@ async def test_load_issue_model(load_csv_file_with_random_values) -> None:  # ty
         start_date=worklog["start_date"],
         start_time=worklog["start_time"],
     )
-    assert issue_model.time_spent == 21600
+    assert issue_model.time_spent == 21600  # noqa: WPS432
 
     worklog = csv_object["worklogs"][1]
     issue_model = WorklogModel(
@@ -31,7 +33,7 @@ async def test_load_issue_model(load_csv_file_with_random_values) -> None:  # ty
         start_date=worklog["start_date"],
         start_time=worklog["start_time"],
     )
-    assert issue_model.time_spent == 19800
+    assert issue_model.time_spent == 19800  # noqa: WPS432
 
     worklog = csv_object["worklogs"][2]
     issue_model = WorklogModel(

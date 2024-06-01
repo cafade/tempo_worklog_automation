@@ -21,6 +21,8 @@ def test_load_issue_model(load_csv_file_with_valid_values) -> None:  # type: ign
     GIVEN a csv file path string
     WHEN load_csv_file is called
     THEN object with contents of csv file must be returned
+
+    :param load_csv_file_with_valid_values: fixture to test issue creation API.
     """
     csv_object = load_csv_file_with_valid_values
 
@@ -56,10 +58,9 @@ def test_load_issue_model(load_csv_file_with_valid_values) -> None:  # type: ign
         worklog_ids = results["worklog_ids"]  # type: ignore
 
         for status_code in status_codes:  # type: ignore
-            assert status_code == 200
+            assert status_code == 200  # noqa: WPS432
     finally:
-        # pass
         results = make_async_delete_worklog_requests(worklog_ids)  # type: ignore
 
-        for status_code in results:  # type: ignore
-            assert status_code == 204
+        for status_code in results:  # type: ignore # noqa: WPS440
+            assert status_code == 204  # noqa: WPS432

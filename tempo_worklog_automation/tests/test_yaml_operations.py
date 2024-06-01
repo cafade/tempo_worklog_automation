@@ -9,6 +9,8 @@ async def test_load_yaml(load_yaml_file_with_random_values) -> None:  # type: ig
     GIVEN a yaml file path string
     WHEN yaml.safe_load is called
     THEN object with contents of yaml file must be returned
+
+    :param load_yaml_file_with_random_values: fixture to test yaml files operations.
     """
     yaml_object = load_yaml_file_with_random_values
 

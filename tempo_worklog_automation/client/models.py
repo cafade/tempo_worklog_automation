@@ -65,4 +65,6 @@ class WorklogModel(BaseModel):
 
 
 class CliArguments(BaseModel):
+    """Pydantic model for cli args."""
+
     file_path: FilePath

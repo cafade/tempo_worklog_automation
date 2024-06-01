@@ -4,8 +4,14 @@ from typing import Any, Dict, List
 
 
 def load_csv_file(csv_file_path: Path) -> Dict[str, Any]:
-    DictionaryData = Dict[str, List[Any]]
-    dictionary_data: DictionaryData = {"worklogs": []}
+    """
+    Load parsed csv file then return as dictionary.
+
+    :param csv_file_path: Path object for the csv file.
+    :return: dictionary_data with parsed csv file.
+    """
+    dictionary_data_init = Dict[str, List[Any]]
+    dictionary_data: dictionary_data_init = {"worklogs": []}
 
     with open(
         csv_file_path,

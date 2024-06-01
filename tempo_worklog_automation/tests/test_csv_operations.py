@@ -9,6 +9,8 @@ async def test_load_csv(load_csv_file_with_random_values) -> None:  # type: igno
     GIVEN a CSV file path string
     WHEN load_csv_file is called
     THEN object with contents of csv file must be returned
+
+    :param load_csv_file_with_random_values: fixture to test csv files operations.
     """
     csv_object = load_csv_file_with_random_values
 
