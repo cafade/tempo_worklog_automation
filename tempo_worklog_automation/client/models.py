@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, FilePath, validator
+from pydantic import BaseModel, FilePath, field_validator
 
 
 class WorklogModel(BaseModel):
@@ -11,7 +11,7 @@ class WorklogModel(BaseModel):
     start_date: str
     start_time: str
 
-    @validator("time_spent", pre=True)
+    @field_validator("time_spent", mode="before")
     def validate_time_spent(cls, value: str) -> int:  # noqa: N805, WPS111
         """
         Pydantic validation for issue field of time_spent.
@@ -33,7 +33,7 @@ class WorklogModel(BaseModel):
             raise ValueError("Could not transform string to 24h hour string.")
         return time_spent_to_seconds
 
-    @validator("start_date", pre=True)
+    @field_validator("start_date", mode="before")
     def validate_start_date(cls, value: str) -> str:  # noqa: N805, WPS111
         """
         Pydantic validation for issue field of start_date.
@@ -48,7 +48,7 @@ class WorklogModel(BaseModel):
             raise ValueError("Incorrect date format, should be YYYY-MM-DD")
         return value
 
-    @validator("start_time", pre=True)
+    @field_validator("start_time", mode="before")
     def validate_start_time(cls, value: str) -> str:  # noqa: N805, WPS111
         """
         Pydantic validation for issue field of start_time.
