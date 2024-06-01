@@ -53,7 +53,16 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-        args: [--count, --format=wemake, .]
+        args:
+          [
+            --count,
+            --format=wemake,
+            --max-local-variables=10,
+            --max-line-complexity=16,
+            "--per-file-ignores=*.py: WPS237 log.py: WPS323 */tests/*.py: S101",
+            --show-violation-links,
+            .,
+          ]
 
       - id: mypy
         name: Validate types with MyPy
