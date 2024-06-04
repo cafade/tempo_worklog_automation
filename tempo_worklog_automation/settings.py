@@ -1,7 +1,7 @@
 import enum
 from logging import DEBUG, ERROR, INFO, WARNING
 
-from pydantic import validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,13 +17,13 @@ class LogLevel(enum.Enum):
 class Settings(BaseSettings):
     """Application settings."""
 
-    @validator("log_level", pre=True)
+    @field_validator("log_level", mode="before")
     def validate_log_level(cls, value: str) -> LogLevel:  # noqa: N805
         """
         Validate that the log level is a valid LogLevel enum member.
 
         :param value: validation string.
-        :raises ValueError: when validator condition fails.
+        :raises ValueError: when field_validator condition fails.
         :return: enum log level.
         """
         try:
