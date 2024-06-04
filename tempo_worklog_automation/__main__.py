@@ -6,10 +6,6 @@ from tempo_worklog_automation.client.utils.log import LoggingClass
 from tempo_worklog_automation.settings import settings
 
 
-# TODO: use these as reference if needed: https://github.com/awiddersheim/tempocli -
-#  https://github.com/szymonkozak/tempomat
-#  TODO: try implementing async post requests with:
-#  https://www.python-httpx.org/async/#anyio
 def main() -> None:
     """Main function."""
     logger_instance = LoggingClass(
@@ -41,4 +37,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    # test comment
