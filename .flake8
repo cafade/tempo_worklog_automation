@@ -4,8 +4,12 @@ inline-quotes = double
 max-line-length = 88
 extend-ignore = E203
 docstring_style=sphinx
+max-local-variables = 10
+max-line-complexity = 16
 
 ignore =
+  ; Forbids f strings that are too complex.
+  WPS237
   ; Found `f` string
   WPS305,
   ; Missing docstring in public module
@@ -74,6 +78,11 @@ ignore =
   WPS403,
 
 per-file-ignores =
+  ; log class file
+  log.py:
+  ; Forbid % formatting on strings.
+  WPS323,
+
   ; all tests
   test_*.py,tests.py,tests_*.py,*/tests/*,conftest.py:
   ; Use of assert detected
